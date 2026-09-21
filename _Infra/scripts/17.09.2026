@@ -1,0 +1,37 @@
+-- ddl
+create table soldiers(
+	name text,
+	rank text
+);
+
+create table ranks(
+	id int,
+	name text
+);
+
+select * from soldiers
+where
+	rank like 'мл%';
+
+alter table soldiers add soldier_id int;
+
+select * from soldiers;
+
+update soldiers set soldier_id = 1;
+
+insert into ranks(id, name) values('2', 'Лейтенант');
+insert into ranks(id, name) values('3', 'Старший Лейтенант');
+insert into ranks(id, name) values('4', 'Капитан');
+insert into ranks(id, name) values('5', 'Майор');
+insert into ranks(id, name) values('6', 'Подполковник');
+insert into ranks(id, name) values('7', 'Полковник');
+
+select * from ranks;
+
+select * from soldiers, ranks
+where
+	soldiers.rank_id = ranks.id;
+
+select soldiers.name || ' - ' || ranks.name || ' (код должности - ' || ranks.id || ')' as full_name from soldiers, ranks
+where
+	soldiers.rank_id = ranks.id
