@@ -1,0 +1,80 @@
+--ddl
+--таблицы
+create table if not exists packs( --что это вообще? логи? группы солдат? что?
+	id int,
+	user_id int,
+	equipment_type_id int,
+	DDHHM int,
+	HHHH int,
+	BBBTT int
+);
+
+create table if not exists users( --так же, как на прошлой паре
+	id int,
+	name text,
+	surname text,
+	job_title_id int
+);
+
+create table if not exists job_titles( --так же, как на прошлой паре
+	id int,
+	name text
+);
+
+create table if not exists parameters( --из тз
+	id int,
+	name text,
+	default_value int,
+	unit text
+);
+
+create table if not exists equipment_types( --айди и название?
+	id int,
+	name text
+);
+
+--тестовые данные
+insert into parameters(id, name, default_value, unit) values('1', 'Высота Метеопоста', '100', 'Метр');
+insert into parameters(id, name, default_value, unit) values('2', 'Температура', '15', 'Цельсий');
+insert into parameters(id, name, default_value, unit) values('3', 'Давление', '750', 'Миллиметры Ртутного Столба');
+insert into parameters(id, name, default_value, unit) values('4', 'Направление Ветра', '00', 'Большое Деление Углометра');
+insert into parameters(id, name, default_value, unit) values('5', 'Скорость Ветра', '0', 'Метр В Секунду');
+insert into parameters(id, name, default_value, unit) values('6', 'Дальность Сноса Пуль', '0', 'Метр');
+
+insert into job_titles(id, name) values('1', 'Младший Лейтенант');
+insert into job_titles(id, name) values('2', 'Лефтенант');
+insert into job_titles(id, name) values('3', 'Старший Лейтенант');
+insert into job_titles(id, name) values('4', 'Капитан');
+insert into job_titles(id, name) values('5', 'Майор');
+insert into job_titles(id, name) values('6', 'Подполковник');
+insert into job_titles(id, name) values('7', 'Полковник');
+
+insert into equipment_types(id, name) values('1', 'Десантный Метео Комплекс');
+insert into equipment_types(id, name) values('2', 'Ветровое Ружьё');
+
+insert into users(id, name, surname, job_title_id) values('1', 'Кирилл', 'Жаренов', '1');
+insert into users(id, name, surname, job_title_id) values('2', 'Роман', 'Сатин', '1');
+insert into users(id, name, surname, job_title_id) values('3', 'Герман', 'Геец', '3');
+insert into users(id, name, surname, job_title_id) values('4', 'Виталий', 'Выборов', '4');
+
+insert into packs(id, user_id, equipment_type_id, DDHHM, HHHH, BBBTT) values('1', '1', '1', '24125', '0060', '00409');
+insert into packs(id, user_id, equipment_type_id, DDHHM, HHHH, BBBTT) values('2', '1', '2', '24173', '0060', '51312');
+insert into packs(id, user_id, equipment_type_id, DDHHM, HHHH, BBBTT) values('3', '4', '2', '24231', '0060', '51404');
+insert into packs(id, user_id, equipment_type_id, DDHHM, HHHH, BBBTT) values('4', '3', '1', '25044', '0060', '50301');
+insert into packs(id, user_id, equipment_type_id, DDHHM, HHHH, BBBTT) values('5', '2', '2', '25124', '0060', '01216');
+
+--запрос
+select 'Измерение ' || packs.id || ' сделано в ' || packs.DDHHM || ' на ' || equipment_types.name || ' пользователем ' || users.name || ' ' || users.surname || ' ' || job_titles.name as measurement_from_logs from packs, users, job_titles, equipment_types
+where
+	packs.equipment_type_id = equipment_types.id and
+	packs.user_id = users.id and
+	users.job_title_id = job_titles.id;
+
+--сбросить таблицы для реюзабельности скрипта, просто выделить строки и выполнить только их
+/*
+drop table if exists users;
+drop table if exists packs;
+drop table if exists equipment_types;
+drop table if exists job_titles;
+drop table if exists parameters;
+*/
