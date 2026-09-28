@@ -1,0 +1,176 @@
+-- Миграционный скрипт
+-- 2026-09-23
+drop table if exists military_ranks;
+drop table if exists employees;
+drop table if exists measurment_types;
+drop table if exists measurement_values;
+drop table if exists parameter_types;
+drop table if exists batches;
+drop table if exists parameters_measurements;
+
+
+-- 1. Справочник должностей military_ranks
+-- Чистим старые данные
+truncate job_titles;
+
+-- Редактируем таблицу
+alter table job_titles rename to military_ranks;
+alter table military_ranks rename column name to description;
+alter table military_ranks alter column description type character varying(255);
+
+comment on table military_ranks is 'Справочник должностей';
+comment on column military_ranks.id is 'Уникальный код';
+comment on column military_ranks.description is 'Описание';
+
+-- Заполняем данные
+insert into military_ranks(id, description)
+values(1,'Рядовой'),
+	(2,'Лейтенант');
+
+
+-- 2. Пользователи employees
+-- Чистим старые данные
+truncate users;
+
+-- Редактируем таблицу
+alter table users rename to employees;
+alter table employees drop column surname;
+alter table employees add column birthday timestamp;
+alter table employees rename column job_title_id to military_rank_id;
+
+comment on table employees is 'Пользователи';
+comment on column employees.id is 'Уникальный код';
+comment on column employees.name is 'Имя';
+comment on column employees.birthday is 'Дата рождения';
+comment on column employees.military_rank_id is 'Уникальный код должности';
+
+-- Заполняем данные
+insert into employees(id, name, birthday, military_rank_id)  
+values(1, 'Воловиков Александр Сергеевич','1978-06-24', 2);
+
+
+-- 3. Справочник устройств для измерения measurment_types
+-- Чистим старые данные
+truncate equipment_types;
+
+-- Редактируем таблицу
+alter table equipment_types rename to measurment_types;
+alter table measurment_types rename column name to short_name;
+alter table measurment_types alter column short_name type character varying(50);
+alter table measurment_types add column description text;
+
+comment on table measurment_types is 'Измерительное оборудование';
+comment on column measurment_types.id is 'Уникальный код';
+comment on column measurment_types.short_name is 'Краткое наименование';
+comment on column measurment_types.description is 'Описание';
+
+-- Заполняем данные
+insert into measurment_types(id, short_name, description)
+values(1, 'ДМК', 'Десантный метео комплекс'),
+	(2,'ВР','Ветровое ружье');
+
+
+-- 4. Справочник единиц измерения measurement_values
+-- Создаём таблицу
+create table measurement_values
+(
+	id integer,
+	description character varying(50)
+);
+
+comment on table measurement_values is 'Справочник единиц измерения';
+comment on column measurement_values.id is 'Уникальный код';
+comment on column measurement_values.description is 'Описание';
+
+-- Заполняем данные
+insert into measurement_values(id, description)
+values(1,'Метры над уровнем моря'),
+	(2,'Градусы цельсия'),
+	(3,'Миллиметры ртутного столба'),
+	(4,'Большие деления угломера'),
+	(5,'Метры в секунду'),
+	(6,'Метры горизонтальные');
+
+
+-- 5. Справочник параметров parameter_types
+-- Чистим старые данные
+truncate parameters;
+
+-- Редактируем таблицу
+alter table parameters rename to parameter_types;
+alter table parameter_types alter column name type character varying(50);
+alter table parameter_types rename column default_value to measurement_value_id;
+alter table parameter_types drop column unit;
+
+comment on table parameter_types is 'Параметры измерений';
+comment on column parameter_types.id is 'Уникальный код';
+comment on column parameter_types.name is 'Наименование';
+comment on column parameter_types.measurement_value_id is 'Уникальный код единицы измерения';
+
+-- Заполняем данные
+insert into parameter_types(id, name, measurement_value_id) 
+values(1, 'Высота метеопоста', 1),
+	(2, 'Температура', 2),
+	(3, 'Давление', 3),
+	(4, 'Направление ветра', 4),
+	(5, 'Скорость ветра', 5),
+	(6, 'Дальность сноса пуль', 6);
+
+
+-- 6. Пачки batches
+-- Чистим старые данные
+truncate packs;
+
+-- Редактируем таблицу
+alter table packs rename to batches;
+alter table batches rename column user_id to employee_id;
+alter table batches alter column ddhhm type character varying(10);
+alter table batches drop column equipment_type_id;
+alter table batches drop column hhhh;
+alter table batches drop column bbbtt;
+
+comment on table batches is 'Лог с датой измерения параметра';
+comment on column batches.id is 'Уникальный код';
+comment on column batches.employee_id is 'Уникальный код пользователя';
+comment on column batches.ddhhm is 'Дата и время записи параметра';
+
+-- Заполняем данные
+insert into batches(id, employee_id, ddhhm) 
+values(1, 1, '27194'),
+	(2, 1, '27195'),
+	(3, 1, '27200');
+
+
+-- 7. Таблица с параметрами parameters_measurements
+create table parameters_measurements
+(
+    id integer,
+	batch_id integer,
+	parameter_type_id integer,
+	value text
+);
+
+comment on table parameters_measurements is 'Таблица с измерениями параметров';
+comment on column parameters_measurements.id is 'Уникальный код';
+comment on column parameters_measurements.batch_id is 'Уникальный код пачки';
+comment on column parameters_measurements.parameter_type_id is 'Уникальный код параметра';
+comment on column parameters_measurements.value is 'Значение измеренного параметра';
+
+-- Заполняем данные
+insert into parameters_measurements(id, batch_id, parameter_type_id, value)
+values(1,  1, 1, '60'), (2,  1, 2, '15'), (3,  1, 3, '750'), (4,  1, 4, '4'), (5,  1, 5, '2'), (6,  1, 6, '0'),
+	  (7,  2, 1, '60'), (8,  2, 2, '14'), (9,  2, 3, '740'), (10, 2, 4, '7'), (11, 2, 5, '3'), (12, 2, 6, '0'),
+	  (13, 3, 1, '60'), (14, 3, 2, '14'), (15, 3, 3, '745'), (16, 3, 4, '9'), (17, 3, 5, '5'), (18, 3, 6, '0');
+
+---------------------------------------------------
+-- Итоговый запрос
+---------------------------------------------------
+
+select 'Измерение ' || batches.id || ' сделано в ' || batches.ddhhm || ' пользователем ' || employees.name || '. ' || parameter_types.name || ' равен ' || parameters_measurements.value || ' ' || measurement_values.description 
+as measurement_from_logs
+from batches, employees, parameter_types, parameters_measurements, measurement_values
+where
+	    parameters_measurements.parameter_type_id = parameter_types.id
+	and parameters_measurements.batch_id = batches.id
+	and batches.employee_id = employees.id
+	and parameter_types.measurement_value_id = measurement_values.id;
