@@ -1,0 +1,57 @@
+-- 1. Каждый пользователь имеет одинаковое количество измерений?
+select 
+    'Вопрос 1' as check_id,
+    case when count(distinct cnt) = 1 then 'YES' else 'NO' end as answer
+from (
+    select employees.id, count(batches.id) as cnt
+    from employees
+    left join batches on batches.employee_id = employees.id
+    group by employees.id
+) check_1;
+
+-- 2. У нас нет пустых пачек измерения?
+select 
+    'Вопрос 2' as check_id,
+    case when count(*) = 0 then 'YES' else 'NO' end as answer
+from (
+    select batches.id
+    from batches
+    left join parameters_measurements on parameters_measurements.batch_id = batches.id
+    group by batches.id
+    having count(parameters_measurements.id) = 0
+) check_2;
+
+-- 3. Каждая пачка измерений содержит полное количеситво параметров?
+select 
+    'Вопрос 3' as check_id,
+    case when count(*) = 0 then 'YES' else 'NO' end as answer
+from (
+    select batches.id, count(parameters_measurements.id) as actual
+    from batches
+    left join parameters_measurements on parameters_measurements.batch_id = batches.id
+    group by batches.id
+) check_3_1
+cross join (select count(*) as expected from parameter_types) check_3_2
+where check_3_1.actual <> check_3_2.expected;
+
+-- 4. Все значения который сформировал корректны и в рамках нужного нам диаппазонов?
+select 
+    'Вопрос 4' as check_id,
+    case when count(*) = 0 then 'YES' else 'NO' end as answer
+from parameters_measurements
+join (
+    select 1 as parameter_type_id, -2000 as min_val, 5000 as max_val union all
+    select 2, -58, 58 union all
+    select 3, 500, 900 union all
+    select 4, 0, 59 union all
+    select 5, 0, 15 union all
+    select 6, 0, 150
+) check_4 on check_4.parameter_type_id = parameters_measurements.parameter_type_id
+where parameters_measurements.value::numeric not between check_4.min_val and check_4.max_val;
+
+-- 5. Все единицы измерения верны и корректны по отношению к указанным параметрам?
+select 
+    'Вопрос 5' as check_id,
+    case when count(*) = 0 then 'YES' else 'NO' end as answer
+from parameter_types
+where id <> measurement_value_id;
