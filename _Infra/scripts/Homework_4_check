@@ -26,13 +26,12 @@ select
     'Вопрос 3' as check_id,
     case when count(*) = 0 then 'YES' else 'NO' end as answer
 from (
-    select batches.id, count(parameters_measurements.id) as actual
+    select batches.id
     from batches
     left join parameters_measurements on parameters_measurements.batch_id = batches.id
     group by batches.id
-) check_3_1
-cross join (select count(*) as expected from parameter_types) check_3_2
-where check_3_1.actual <> check_3_2.expected;
+	having count(parameters_measurements.id) <> (select count(*) from parameter_types)
+) check_3;
 
 -- 4. Все значения который сформировал корректны и в рамках нужного нам диаппазонов?
 select 
@@ -54,4 +53,12 @@ select
     'Вопрос 5' as check_id,
     case when count(*) = 0 then 'YES' else 'NO' end as answer
 from parameter_types
-where id <> measurement_value_id;
+join (
+    select 1 as parameter_type_id, 1 as measurement_value_id union all
+    select 2, 2 union all
+    select 3, 3 union all
+    select 4, 4 union all
+    select 5, 5 union all
+    select 6, 6
+) expected on expected.parameter_type_id = parameter_types.id
+where parameter_types.measurement_value_id <> expected.measurement_value_id;
