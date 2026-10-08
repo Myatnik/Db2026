@@ -1,4 +1,10 @@
 --ddl
+drop table if exists users;
+drop table if exists packs;
+drop table if exists equipment_types;
+drop table if exists job_titles;
+drop table if exists parameters;
+
 --таблицы
 create table if not exists packs( --что это вообще? логи? группы солдат? что?
 	id int,
@@ -69,12 +75,3 @@ where
 	packs.equipment_type_id = equipment_types.id and
 	packs.user_id = users.id and
 	users.job_title_id = job_titles.id;
-
---сбросить таблицы для реюзабельности скрипта, просто выделить строки и выполнить только их
-/*
-drop table if exists users;
-drop table if exists packs;
-drop table if exists equipment_types;
-drop table if exists job_titles;
-drop table if exists parameters;
-*/
