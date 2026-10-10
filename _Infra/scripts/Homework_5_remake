@@ -1,0 +1,277 @@
+-- Пересоздание миграции
+rollback;
+-- 0. Подготовка
+begin;
+drop table if exists military_ranks cascade;
+drop table if exists employees cascade;
+drop table if exists measurment_types cascade;
+drop table if exists parameter_values cascade;
+drop table if exists parameter_types cascade;
+drop table if exists batches cascade;
+drop table if exists parameters_measurements cascade;
+drop table if exists temperature_calc_1 cascade;
+commit;
+
+
+
+-- 1. Счётчики
+begin;
+--- 1-1. Справочник должностей military_ranks
+--- Редактируем таблицу
+alter table job_titles rename to military_ranks;
+alter table military_ranks rename column name to description;
+alter table military_ranks alter column description type character varying(255);
+
+create sequence military_ranks_id_seq;
+select setval('military_ranks_id_seq', (select max(id) from military_ranks));
+alter table military_ranks alter column id set default nextval('military_ranks_id_seq');
+alter sequence military_ranks_id_seq owned by military_ranks.id;
+
+comment on table military_ranks is 'Справочник Должностей';
+comment on column military_ranks.id is 'Уникальный Код';
+comment on column military_ranks.description is 'Описание';
+
+--- 1-2. Пользователи employees
+--- Редактируем таблицу
+alter table users rename to employees;
+alter table employees drop column surname;
+alter table employees add column birthday timestamp;
+alter table employees rename column job_title_id to military_rank_id;
+
+create sequence employees_id_seq;
+select setval('employees_id_seq', (select max(id) from employees));
+alter table employees alter column id set default nextval('employees_id_seq');
+alter sequence employees_id_seq owned by employees.id;
+
+comment on table employees is 'Пользователи';
+comment on column employees.id is 'Уникальный Код';
+comment on column employees.name is 'Имя';
+comment on column employees.birthday is 'Дата Рождения';
+comment on column employees.military_rank_id is 'Уникальный Код Должности';
+
+--- Дополняем данные
+update employees set name = 'Выборов Виталий Алексеевич', birthday = '2007-10-10' where name = 'Виталий';
+update employees set name = 'Геец Герман Константинович', birthday = '2000-01-01' where name = 'Герман';
+update employees set name = 'Сатин Роман Юрьевич', birthday = '2000-01-01' where name = 'Роман';
+update employees set name = 'Жаренов Кирилл Алексеевич', birthday = '2000-01-01' where name = 'Кирилл';
+
+--- Заполняем данные
+insert into employees(name, birthday, military_rank_id)  
+values('Воловиков Александр Сергеевич','1978-06-24', 2);
+
+
+--- 1-3. Справочник устройств для измерения measurment_types
+--- Редактируем таблицу
+alter table equipment_types rename to measurment_types;
+alter table measurment_types add column short_name character varying(255);
+alter table measurment_types rename column name to description;
+
+create sequence measurment_types_id_seq;
+select setval('measurment_types_id_seq', (select max(id) from measurment_types));
+alter table measurment_types alter column id set default nextval('measurment_types_id_seq');
+alter sequence measurment_types_id_seq owned by measurment_types.id;
+
+comment on table measurment_types is 'Измерительное Оборудование';
+comment on column measurment_types.id is 'Уникальный Код';
+comment on column measurment_types.short_name is 'Краткое Наименование';
+comment on column measurment_types.description is 'Описание';
+
+--- Дополняем данные
+update measurment_types set short_name = 'ДМК' where description = 'Десантный Метео Комплекс';
+update measurment_types set short_name = 'ВР' where description = 'Ветровое Ружьё';
+
+--- 1-4. Справочник единиц измерения parameter_values
+--- Создаём таблицу
+create table parameter_values
+(
+	id integer,
+	description character varying(50)
+);
+
+create sequence parameter_values_id_seq;
+alter table parameter_values alter column id set default nextval('parameter_values_id_seq');
+alter sequence parameter_values_id_seq owned by parameter_values.id;
+
+comment on table parameter_values is 'Справочник Единиц Измерения';
+comment on column parameter_values.id is 'Уникальный Код';
+comment on column parameter_values.description is 'Описание';
+
+--- Заполняем данные
+insert into parameter_values(description)
+values('Метр Над Уровнем Моря'),
+	('Градус Цельсия'),
+	('Миллиметр Ртутного Столба'),
+	('Большое Деление Угломера'),
+	('Метр В Секунду'),
+	('Метр Горизонтальный');
+
+
+--- 1-5. Справочник параметров parameter_types
+--- Редактируем таблицу
+alter table parameters rename to parameter_types;
+alter table parameter_types alter column name type character varying(255);
+alter table parameter_types rename column default_value to parameter_value_id;
+alter table parameter_types drop column unit;
+
+create sequence parameter_types_id_seq;
+select setval('parameter_types_id_seq', (select max(id) from parameter_types));
+alter table parameter_types alter column id set default nextval('parameter_types_id_seq');
+alter sequence parameter_types_id_seq owned by parameter_types.id;
+
+comment on table parameter_types is 'Параметры Измерений';
+comment on column parameter_types.id is 'Уникальный Код';
+comment on column parameter_types.name is 'Наименование';
+comment on column parameter_types.parameter_value_id is 'Уникальный Код Единицы Измерения';
+
+--- Дополняем данные
+update parameter_types set parameter_value_id = '1' where id = '1';
+update parameter_types set parameter_value_id = '2' where id = '2';
+update parameter_types set parameter_value_id = '3' where id = '3';
+update parameter_types set parameter_value_id = '4' where id = '4';
+update parameter_types set parameter_value_id = '5' where id = '5';
+update parameter_types set parameter_value_id = '6' where id = '6';
+
+
+--- 1-6. Пачки batches
+--- Редактируем таблицу
+alter table packs rename to batches;
+alter table batches rename column user_id to employee_id;
+alter table batches drop column equipment_type_id; --Я не уверен, надо ли оставлять этот столбец
+--alter table batches rename column equipment_type_id to measurment_type_id;
+alter table batches alter column ddhhm type character varying(255);
+alter table batches drop column hhhh;
+alter table batches drop column bbbtt;
+
+create sequence batches_id_seq;
+select setval('batches_id_seq', (select max(id) from batches));
+alter table batches alter column id set default nextval('batches_id_seq');
+alter sequence batches_id_seq owned by batches.id;
+
+comment on table batches is 'Лог С Датой Измерения Параметра';
+comment on column batches.id is 'Уникальный Код';
+comment on column batches.employee_id is 'Уникальный Код Пользователя';
+--comment on column batches.measurment_type_id is 'Уникальный Код Измерительного Оборудования';
+comment on column batches.ddhhm is 'Дата И Время Записи Параметра';
+
+--- Дополняем данные
+update batches set ddhhm = '27194' where id = '1';
+update batches set ddhhm = '27195' where id = '2';
+update batches set ddhhm = '27200' where id = '3';
+update batches set ddhhm = '27201' where id = '4';
+update batches set ddhhm = '27202' where id = '5';
+
+
+--- 1-7. Таблица с параметрами parameters_measurements
+create table parameters_measurements
+(
+    id integer,
+	batch_id integer,
+	parameter_type_id integer,
+	value text
+);
+
+create sequence parameters_measurements_id_seq;
+alter table parameters_measurements alter column id set default nextval('parameters_measurements_id_seq');
+alter sequence parameters_measurements_id_seq owned by parameters_measurements.id;
+
+comment on table parameters_measurements is 'Таблица с измерениями параметров';
+comment on column parameters_measurements.id is 'Уникальный код';
+comment on column parameters_measurements.batch_id is 'Уникальный код пачки';
+comment on column parameters_measurements.parameter_type_id is 'Уникальный код параметра';
+comment on column parameters_measurements.value is 'Значение измеренного параметра';
+
+--- Заполняем данные
+insert into parameters_measurements(batch_id, parameter_type_id, value)
+values(1, 1, '60'), (1, 2, '15'), (1, 3, '750'), (1, 4, '4'), (1, 5, '2'), (1, 6, '0'),
+	  (2, 1, '60'), (2, 2, '14'), (2, 3, '740'), (2, 4, '7'), (2, 5, '3'), (2, 6, '0'),
+	  (3, 1, '60'), (3, 2, '14'), (3, 3, '745'), (3, 4, '9'), (3, 5, '5'), (3, 6, '0'),
+	  (4, 1, '60'), (4, 2, '13'), (4, 3, '750'), (4, 4, '9'), (4, 5, '4'), (4, 6, '0'),
+	  (5, 1, '60'), (5, 2, '11'), (5, 3, '760'), (5, 4, '9'), (5, 5, '4'), (5, 6, '0')
+	  ;
+
+
+--- 1-8. Таблица с правилами измерения погрешности температуры temperature_calc_1
+create table temperature_calc_1
+(
+    id integer,
+	temperature text,
+	correction decimal(2, 1)
+);
+
+create sequence temperature_calc_1_id_seq;
+alter table temperature_calc_1 alter column id set default nextval('temperature_calc_1_id_seq');
+alter sequence temperature_calc_1_id_seq owned by temperature_calc_1.id;
+
+comment on table temperature_calc_1 is 'Таблица с отрезками температуры и поправками измерений';
+comment on column temperature_calc_1.id is 'Уникальный код';
+comment on column temperature_calc_1.temperature is 'Уникальный отрезок температуры';
+comment on column temperature_calc_1.correction is 'Уникальная соответствующая поправка';
+
+--- Заполняем данные
+insert into temperature_calc_1(temperature, correction)
+values('<0', 0.0), ('0-5', 0.5), ('10-15', 1.0), ('20', 1.5), ('25', 2.0), ('30', 3.5), ('40', 4.5);
+commit;
+
+
+
+-- 2. Тестовые данные
+begin;
+INSERT INTO batches(id, employee_id, ddhhm) VALUES
+	(101, 2, '28100'), (102, 3, '28110'), (103, 4, '28120'), (104, 5, '28130'), (105, 5, '28140');
+
+INSERT INTO parameters_measurements(batch_id, parameter_type_id, value) VALUES
+--- Пачка 101, сотрудник 2
+	(101, 1, '60'), (101, 2, '12'), (101, 3, '755'), (101, 4, '10'), (101, 5, '3'), (101, 6, '0'),
+--- Пачка 102, сотрудник 3
+	(102, 1, '60'), (102, 2, '13'), (102, 3, '748'), (102, 4, '8'), (102, 5, '4'), (102, 6, '0'),
+--- Пачка 103, сотрудник 4
+	(103, 1, '60'), (103, 2, '16'), (103, 3, '752'), (103, 4, '5'), (103, 5, '2'), (103, 6, '0'),
+--- Пачка 104, сотрудник 5
+	(104, 1, '60'), (104, 2, '18'), (104, 3, '758'), (104, 4, '12'), (104, 5, '5'), (104, 6, '0'),
+--- Пачка 105, сотрудник 5
+	(105, 1, '60'), (105, 2, '17'), (105, 3, '760'), (105, 4, '9'), (105, 5, '6'), (105, 6, '0');
+commit;
+
+
+
+-- 3. Связи и ограничения
+begin;
+alter table military_ranks add primary key (id);
+alter table employees add primary key (id);
+alter table measurment_types add primary key (id);
+alter table parameter_values add primary key (id);
+alter table parameter_types add primary key (id);
+alter table batches add primary key (id);
+alter table parameters_measurements add primary key (id);
+alter table temperature_calc_1 add primary key (id);
+
+alter table employees add foreign key (military_rank_id) references military_ranks (id);
+alter table parameter_types add foreign key (parameter_value_id) references parameter_values (id);
+alter table batches add foreign key (employee_id) references employees (id);
+alter table parameters_measurements
+	add foreign key (batch_id) references batches (id),
+	add foreign key (parameter_type_id) references parameter_types (id);
+
+alter table military_ranks alter column description set not null;
+alter table employees
+	alter column name set not null,
+	alter column birthday set not null,
+	alter column military_rank_id set not null;
+alter table measurment_types
+	alter column short_name set not null,
+	alter column description set not null;
+alter table parameter_values alter column description set not null;
+alter table parameter_types
+	alter column name set not null,
+	alter column parameter_value_id set not null;
+alter table batches
+	alter column employee_id set not null,
+	alter column ddhhm set not null;
+alter table parameters_measurements
+	alter column batch_id set not null,
+	alter column parameter_type_id set not null,
+	alter column value set not null;
+alter table temperature_calc_1
+	alter column temperature set not null,
+	alter column correction set not null;
+commit;
