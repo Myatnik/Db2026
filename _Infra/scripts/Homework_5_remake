@@ -1,5 +1,4 @@
 -- Пересоздание миграции
-rollback;
 -- 0. Подготовка
 begin;
 drop table if exists military_ranks cascade;
@@ -138,7 +137,7 @@ alter table packs rename to batches;
 alter table batches rename column user_id to employee_id;
 alter table batches drop column equipment_type_id; --Я не уверен, надо ли оставлять этот столбец
 --alter table batches rename column equipment_type_id to measurment_type_id;
-alter table batches alter column ddhhm type character varying(255);
+alter table batches drop column ddhhm;
 alter table batches drop column hhhh;
 alter table batches drop column bbbtt;
 
@@ -151,14 +150,14 @@ comment on table batches is 'Лог С Датой Измерения Парам�
 comment on column batches.id is 'Уникальный Код';
 comment on column batches.employee_id is 'Уникальный Код Пользователя';
 --comment on column batches.measurment_type_id is 'Уникальный Код Измерительного Оборудования';
-comment on column batches.ddhhm is 'Дата И Время Записи Параметра';
+--comment on column batches.ddhhm is 'Дата И Время Записи Параметра';
 
---- Дополняем данные
+/*--- Дополняем данные
 update batches set ddhhm = '27194' where id = '1';
 update batches set ddhhm = '27195' where id = '2';
 update batches set ddhhm = '27200' where id = '3';
 update batches set ddhhm = '27201' where id = '4';
-update batches set ddhhm = '27202' where id = '5';
+update batches set ddhhm = '27202' where id = '5';*/
 
 
 --- 1-7. Таблица с параметрами parameters_measurements
@@ -216,8 +215,8 @@ commit;
 
 -- 2. Тестовые данные
 begin;
-INSERT INTO batches(id, employee_id, ddhhm) VALUES
-	(101, 2, '28100'), (102, 3, '28110'), (103, 4, '28120'), (104, 5, '28130'), (105, 5, '28140');
+INSERT INTO batches(id, employee_id) VALUES
+	(101, 2), (102, 3), (103, 4), (104, 5), (105, 5);
 
 INSERT INTO parameters_measurements(batch_id, parameter_type_id, value) VALUES
 --- Пачка 101, сотрудник 2
@@ -265,8 +264,8 @@ alter table parameter_types
 	alter column name set not null,
 	alter column parameter_value_id set not null;
 alter table batches
-	alter column employee_id set not null,
-	alter column ddhhm set not null;
+	alter column employee_id set not null;
+	--alter column ddhhm set not null;
 alter table parameters_measurements
 	alter column batch_id set not null,
 	alter column parameter_type_id set not null,

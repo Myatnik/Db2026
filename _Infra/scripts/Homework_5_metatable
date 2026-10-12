@@ -10,7 +10,7 @@ WITH db_objects AS (
             WHEN 'S' THEN 'последовательность'
         END AS object_type
     FROM pg_class c
-    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_namespace n ON n.oid = c.relnamespace --о каком отборе по наименованию шла речь?
     WHERE c.relkind IN ('r', 'p', 'S')
       AND n.nspname NOT IN ('pg_catalog', 'information_schema')
       AND n.nspname NOT LIKE 'pg_toast%'
