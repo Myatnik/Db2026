@@ -1,6 +1,7 @@
 -- Пересоздание миграции
 -- 0. Подготовка
-begin;
+do $$
+begin
 drop table if exists military_ranks cascade;
 drop table if exists employees cascade;
 drop table if exists measurment_types cascade;
@@ -14,7 +15,7 @@ commit;
 
 
 -- 1. Счётчики
-begin;
+begin
 --- 1-1. Справочник должностей military_ranks
 --- Редактируем таблицу
 alter table job_titles rename to military_ranks;
@@ -214,7 +215,7 @@ commit;
 
 
 -- 2. Тестовые данные
-begin;
+begin
 INSERT INTO batches(id, employee_id) VALUES
 	(101, 2), (102, 3), (103, 4), (104, 5), (105, 5);
 
@@ -234,7 +235,7 @@ commit;
 
 
 -- 3. Связи и ограничения
-begin;
+begin
 alter table military_ranks add primary key (id);
 alter table employees add primary key (id);
 alter table measurment_types add primary key (id);
@@ -274,3 +275,4 @@ alter table temperature_calc_1
 	alter column temperature set not null,
 	alter column correction set not null;
 commit;
+end $$;
