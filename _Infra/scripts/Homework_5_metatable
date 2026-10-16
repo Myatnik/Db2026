@@ -1,0 +1,26 @@
+-- Отображение метаданных
+
+WITH db_objects AS ( -- подзапрос
+    SELECT
+        n.nspname AS schema_name,
+        c.relname AS object_name,
+        CASE c.relkind
+            WHEN 'r' THEN 'таблица'            -- обычная таблица
+            WHEN 'p' THEN 'таблица'            -- секционированная таблица
+            WHEN 'S' THEN 'последовательность' -- последовательность
+        END AS object_type
+    FROM pg_class c -- всё содержимое базы данных, как наше, так и системное
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_database d ON d.datname = current_database() -- проверка, что только в текущей базе данных
+    WHERE
+        c.relkind IN ('r', 'p', 'S') --оставить таблицы и последовательности
+        AND n.nspname NOT IN ('pg_catalog', 'information_schema') -- откинуть системные таблицы
+        AND n.nspname NOT LIKE 'pg_toast%'
+        AND n.nspname NOT LIKE 'pg_temp%'
+)
+SELECT
+    row_number() OVER (ORDER BY object_type, schema_name, object_name) AS "№",
+    object_name AS "наименование",
+    object_type AS "Тип"
+FROM db_objects
+ORDER BY "№";
