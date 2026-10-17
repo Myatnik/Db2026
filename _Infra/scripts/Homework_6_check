@@ -1,0 +1,53 @@
+do $test$
+	declare
+	    temperature decimal(3,1);
+	    pts interpolation_temps;
+	    correction decimal(3,1);
+	    expected decimal(3,1);
+	begin
+		drop table if exists test cascade;
+	    create temp table if not exists test (
+	        temperature decimal(3,1),
+	        correction decimal(3,1),
+	        expected decimal(3,1));
+	
+	    -- 1. temperature = 0, correction =  0.5
+	    temperature := 0;
+	    pts := find_interpolation_temps(temperature);
+	    correction := temp_linear_interpolate(temperature, pts);
+	    expected := 0.5;
+	    insert into test values (temperature, correction, expected);
+	
+	    -- 2. temperature = -3, correction =  0
+	    temperature := -3;
+	    pts := find_interpolation_temps(temperature);
+	    correction := temp_linear_interpolate(temperature, pts);
+	    expected := 0;
+	    insert into test values (temperature, correction, expected);
+	
+	    -- 3. temperature = 23, correction =  1.8
+	    temperature := 23;
+	    pts := find_interpolation_temps(temperature);
+	    correction := temp_linear_interpolate(temperature, pts);
+	    expected := 1.8;
+	    insert into test values (temperature, correction, expected);
+	
+	    -- 4. temperature = 35, correction =  4
+	    temperature := 35;
+	    pts := find_interpolation_temps(temperature);
+	    correction := temp_linear_interpolate(temperature, pts);
+	    expected := 4;
+	    insert into test values (temperature, correction, expected);
+	
+	    -- 5. temperature = 40, correction =  4.5
+	    temperature := 40;
+	    pts := find_interpolation_temps(temperature);
+	    correction := temp_linear_interpolate(temperature, pts);
+	    expected := 4.5;
+	    insert into test values (temperature, correction, expected);
+	
+
+	end;
+$test$;
+
+select * from test;
