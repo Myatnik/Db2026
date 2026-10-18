@@ -11,6 +11,7 @@ begin
        	y0 decimal(3,1),
       	x1 decimal(3,1),
        	y1 decimal(3,1));
+	comment on type interpolation_temps is 'Границы интерполяции';
 -- Функция рассчёта интервала интерполяции
 	create or replace function find_interpolation_temps (temperature_func decimal(3,1))
 	returns interpolation_temps
@@ -32,6 +33,7 @@ begin
 			return temp_interval;
 		end;
 	$func1$;
+	comment on function find_interpolation_temps (decimal(3,1)) is 'Возвращает границы интерполяци для принимаемой температуры';
 --Функция рассчёта самой интерполяции
 	create or replace function temp_linear_interpolate (temperature_func decimal(3,1), temp_interval interpolation_temps)
 	returns decimal(3,1)
@@ -47,6 +49,7 @@ begin
 			return temp_interval.y0 + (temperature_func - temp_interval.x0) * (temp_interval.y1 - temp_interval.y0) / (temp_interval.x1 - temp_interval.x0);
 		end;
 	$func2$;
+	comment on function temp_linear_interpolate (decimal(3,1), interpolation_temps) is 'Возвращает интерполированное значение поправки температуры';
 
 	
 end $do$;
