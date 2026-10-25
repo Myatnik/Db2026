@@ -1,0 +1,39 @@
+-- Функция рассчёта ДДЧЧМ, ВВВВ, БББТТ
+do $do$
+begin
+	--удаление создаваемого
+	drop function if exists calculate_extra_data(parameter_types_t) cascade;
+
+	--функция
+	create or replace function calculate_extra_data (params parameter_types_t)
+	returns text array --возвращает список с нужными данными
+	language plpgsql
+	as $func1$
+		declare
+			answer text array;
+			ddhhm text;
+			hhhh text;
+			bbbtt text;
+		begin
+			-- рассчёт даты и времени
+			ddhhm := lpad(extract(day from now())::int::text, 2, '0')
+    			|| lpad(extract(hour from now())::int::text, 2, '0')
+    			|| (extract(minute from now())::int / 10)::text;
+			-- рассчёт высоты
+			hhhh := lpad(params.altitude::text, 4, '0');
+			--рассчёт поправок или что это вообще
+			bbbtt := lpad((case when params.pressure - 750 < 0 then params.pressure - 750 + 500 else params.pressure - 750 end)::text, 3, '0') || 
+				lpad(((params.temperature - temp_linear_interpolate(params.temperature, find_interpolation_temps(params.temperature)))-15.9)::text, 2, '0');
+			--результат
+			answer = array_append(answer, ddhhm);
+			answer = array_append(answer, hhhh);
+			answer = array_append(answer, bbbtt);
+
+			return answer;
+		end;
+	$func1$;
+	comment on function check_parameter_trustworthness (parameter_types_t) is 'Возвращает три дополнительных данных';
+	
+end;
+$do$;
+

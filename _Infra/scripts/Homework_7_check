@@ -1,0 +1,76 @@
+-- Проверка работоспособности функции
+
+do $test$
+	declare
+		meas_values parameter_types_t;
+		erfl bool;
+		erid int;
+		
+	begin
+		drop table if exists test cascade;
+		create table if not exists test (
+			id int,
+			measurement_type_id int,
+			altitude int,
+			temperature int,
+			pressure int,
+			wind_direction int,
+			wind_speed int,
+			bullet_drift_length int,
+			error_flag bool,
+			error_id int);
+		
+		--Проверка 1, без ошибок
+		meas_values := row(1, 234, 23, 608, 12, 3, 0)::parameter_types_t;
+		erid := check_parameter_trustworthness(meas_values);
+		if erid = 0 then erfl := false; else erfl := true; end if;
+			
+		insert into test values
+			(1, meas_values.measurement_type_id, meas_values.altitude,
+			meas_values.temperature, meas_values.pressure, meas_values.wind_direction,
+			meas_values.wind_speed, meas_values.bullet_drift_length, erfl, erid);
+
+		--Проверка 2, ошибка 'Данные в некоторых ячейках отсутствуют'
+		meas_values := row(2, null, 23, 608, null, 3, 0)::parameter_types_t;
+		erid := check_parameter_trustworthness(meas_values);
+		if erid = 0 then erfl := false; else erfl := true; end if;
+			
+		insert into test values
+			(2, meas_values.measurement_type_id, meas_values.altitude,
+			meas_values.temperature, meas_values.pressure, meas_values.wind_direction,
+			meas_values.wind_speed, meas_values.bullet_drift_length, erfl, erid);
+
+		--Проверка 3, ошибка 'Присутствуют лишние данные'
+		meas_values := row(1, 234, 23, 608, 12, 3, 12)::parameter_types_t;
+		erid := check_parameter_trustworthness(meas_values);
+		if erid = 0 then erfl := false; else erfl := true; end if;
+			
+		insert into test values
+			(3, meas_values.measurement_type_id, meas_values.altitude,
+			meas_values.temperature, meas_values.pressure, meas_values.wind_direction,
+			meas_values.wind_speed, meas_values.bullet_drift_length, erfl, erid);
+
+		--Проверка 4, ошибка 'Данные выходят за пределы допустимых диапазонов'
+		meas_values := row(2, 234, 23, 1050, 12, 3, 0)::parameter_types_t;
+		erid := check_parameter_trustworthness(meas_values);
+		if erid = 0 then erfl := false; else erfl := true; end if;
+			
+		insert into test values
+			(4, meas_values.measurement_type_id, meas_values.altitude,
+			meas_values.temperature, meas_values.pressure, meas_values.wind_direction,
+			meas_values.wind_speed, meas_values.bullet_drift_length, erfl, erid);
+
+		--Проверка 5, ошибка 'Присутствуют лишние данные'
+		meas_values := row(1, 234, 23, 608, 12, 3, 12)::parameter_types_t;
+		erid := check_parameter_trustworthness(meas_values);
+		if erid = 0 then erfl := false; else erfl := true; end if;
+			
+		insert into test values
+			(5, meas_values.measurement_type_id, meas_values.altitude,
+			meas_values.temperature, meas_values.pressure, meas_values.wind_direction,
+			meas_values.wind_speed, meas_values.bullet_drift_length, erfl, erid);
+		
+	end;
+$test$;
+select * from test, data_errors
+where test.error_id = data_errors.id;

@@ -1,0 +1,56 @@
+-- Функция проверки на ошибки
+do $do$
+begin
+	--удаление создаваемого
+	drop type if exists parameter_types_t cascade;
+	drop function if exists check_parameter_trustworthness (parameter_types_t) cascade;
+	
+	--тип данных с типами параметров
+	create type parameter_types_t as ( --зачем нам вообще это? мы просто переделываем таблицу с типами параметров? у нас же она уже есть
+		measurement_type_id int,
+		altitude int,
+		temperature int,
+		pressure int,
+		wind_direction int,
+		wind_speed int,
+		bullet_drift_length int
+	);
+	comment on type parameter_types_t is 'Виды параметров для каждого измерения';
+
+	--функция проверки корректности параметров
+	create or replace function check_parameter_trustworthness (params parameter_types_t)
+	returns int --возвращает первую найденную ошибку
+	language plpgsql
+	as $func1$
+		begin
+			if params.measurement_type_id is null -- 'Данные в некоторых ячейках отсутствуют'
+       			or params.altitude is null
+   			    or params.temperature is null
+			    or params.pressure is null
+  			    or params.wind_direction is null
+  			    or params.wind_speed is null
+  				or params.bullet_drift_length is null then
+        		return 2;
+    		end if;
+
+    		if params.measurement_type_id <> 2 and params.bullet_drift_length <> 0 then -- 'Присутствуют лишние данные'
+        	return 3;
+    		end if;
+
+    		if exists (select 1 from (values -- 'Данные выходят за пределы допустимых диапазонов'
+            	(params.altitude, 1),
+            	(params.temperature, 2),
+            	(params.pressure, 3),
+            	(params.wind_direction, 4),
+            	(params.wind_speed, 5),
+            	(params.bullet_drift_length, 6)) as v(value, parameter_value_id)
+        		join parameter_values pv on pv.id = v.parameter_value_id
+        		where v.value < pv.min_value or v.value > pv.max_value) then
+        		return 1;
+   			end if;
+
+    		return 0; --ошибок нет
+		end;
+	$func1$;
+	comment on function check_parameter_trustworthness (parameter_types_t) is 'Возвращает статус проверки измерения на ошибки';
+end $do$;
