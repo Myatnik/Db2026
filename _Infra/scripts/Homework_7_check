@@ -4,7 +4,7 @@ do $test$
 	declare
 		meas_values parameter_types_t;
 		erfl bool;
-		erid int;
+		erid text array;
 		
 	begin
 		drop table if exists test cascade;
@@ -18,12 +18,12 @@ do $test$
 			wind_speed int,
 			bullet_drift_length int,
 			error_flag bool,
-			error_id int);
+			error_id text array);
 		
 		--Проверка 1, без ошибок
 		meas_values := row(1, 234, 23, 608, 12, 3, 0)::parameter_types_t;
 		erid := check_parameter_trustworthness(meas_values);
-		if erid = 0 then erfl := false; else erfl := true; end if;
+		if cardinality(erid) = 0 then erfl := false; else erfl := true; end if;
 			
 		insert into test values
 			(1, meas_values.measurement_type_id, meas_values.altitude,

@@ -19,9 +19,10 @@ begin
 
 	--функция проверки корректности параметров
 	create or replace function check_parameter_trustworthness (params parameter_types_t)
-	returns int --возвращает первую найденную ошибку
+	returns text array --возвращает первую найденную ошибку
 	language plpgsql
 	as $func1$
+		declare answer text array;
 		begin
 			if params.measurement_type_id is null -- 'Данные в некоторых ячейках отсутствуют'
        			or params.altitude is null
@@ -30,11 +31,11 @@ begin
   			    or params.wind_direction is null
   			    or params.wind_speed is null
   				or params.bullet_drift_length is null then
-        		return 2;
+				answer := array_append(answer, (SELECT description FROM data_errors WHERE id = 2));
     		end if;
 
     		if params.measurement_type_id <> 2 and params.bullet_drift_length <> 0 then -- 'Присутствуют лишние данные'
-        	return 3;
+				answer := array_append(answer, (SELECT description FROM data_errors WHERE id = 3));
     		end if;
 
     		if exists (select 1 from (values -- 'Данные выходят за пределы допустимых диапазонов'
@@ -46,10 +47,10 @@ begin
             	(params.bullet_drift_length, 6)) as v(value, parameter_value_id)
         		join parameter_values pv on pv.id = v.parameter_value_id
         		where v.value < pv.min_value or v.value > pv.max_value) then
-        		return 1;
+				answer := array_append(answer, (SELECT description FROM data_errors WHERE id = 1));
    			end if;
 
-    		return 0; --ошибок нет
+    		return answer; --ошибок нет
 		end;
 	$func1$;
 	comment on function check_parameter_trustworthness (parameter_types_t) is 'Возвращает статус проверки измерения на ошибки';
