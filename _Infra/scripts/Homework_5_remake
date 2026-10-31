@@ -11,6 +11,7 @@ begin
 		drop table if exists batches cascade;
 		drop table if exists parameters_measurements cascade;
 		drop table if exists temperature_calc_1 cascade;
+		drop table if exists data_errors cascade;
 	end;
 
 
@@ -85,7 +86,9 @@ begin
 		create table parameter_values
 		(
 			id integer,
-			description character varying(50)
+			description character varying(50),
+			min_value integer,
+			max_value integer
 		);
 		
 		create sequence parameter_values_id_seq;
@@ -95,15 +98,17 @@ begin
 		comment on table parameter_values is 'Справочник Единиц Измерения';
 		comment on column parameter_values.id is 'Уникальный Код';
 		comment on column parameter_values.description is 'Описание';
+		comment on column parameter_values.min_value is 'Минимальное значение единицы измерения';
+		comment on column parameter_values.max_value is 'Максимальное значение единицы измерения';
 		
 		--- Заполняем данные
-		insert into parameter_values(description)
-		values('Метр Над Уровнем Моря'),
-			('Градус Цельсия'),
-			('Миллиметр Ртутного Столба'),
-			('Большое Деление Угломера'),
-			('Метр В Секунду'),
-			('Метр Горизонтальный');
+		insert into parameter_values(description, min_value, max_value)
+		values('Метр Над Уровнем Моря', -10990, 8849), -- Предела нет, просто поставим недостижимые в реальности значения
+			('Градус Цельсия', -58, 58),
+			('Миллиметр Ртутного Столба', 500, 900),
+			('Большое Деление Угломера', 0, 59),
+			('Метр В Секунду', 0, 15),
+			('Метр Горизонтальный', 0, 150);
 		
 		
 		--- 1-5. Справочник параметров parameter_types
@@ -151,14 +156,6 @@ begin
 		comment on column batches.id is 'Уникальный Код';
 		comment on column batches.employee_id is 'Уникальный Код Пользователя';
 		--comment on column batches.measurment_type_id is 'Уникальный Код Измерительного Оборудования';
-		--comment on column batches.ddhhm is 'Дата И Время Записи Параметра';
-		
-		/*--- Дополняем данные
-		update batches set ddhhm = '27194' where id = '1';
-		update batches set ddhhm = '27195' where id = '2';
-		update batches set ddhhm = '27200' where id = '3';
-		update batches set ddhhm = '27201' where id = '4';
-		update batches set ddhhm = '27202' where id = '5';*/
 		
 		
 		--- 1-7. Таблица с параметрами parameters_measurements
@@ -186,8 +183,7 @@ begin
 			  (2, 1, '60'), (2, 2, '14'), (2, 3, '740'), (2, 4, '7'), (2, 5, '3'), (2, 6, '0'),
 			  (3, 1, '60'), (3, 2, '14'), (3, 3, '745'), (3, 4, '9'), (3, 5, '5'), (3, 6, '0'),
 			  (4, 1, '60'), (4, 2, '13'), (4, 3, '750'), (4, 4, '9'), (4, 5, '4'), (4, 6, '0'),
-			  (5, 1, '60'), (5, 2, '11'), (5, 3, '760'), (5, 4, '9'), (5, 5, '4'), (5, 6, '0')
-			  ;
+			  (5, 1, '60'), (5, 2, '11'), (5, 3, '760'), (5, 4, '9'), (5, 5, '4'), (5, 6, '0');
 		
 		
 		--- 1-8. Таблица с правилами измерения погрешности температуры temperature_calc_1
@@ -210,6 +206,28 @@ begin
 		--- Заполняем данные
 		insert into temperature_calc_1(temperature, correction)
 		values(0, 0.5), (5, 0.5), (10, 1.0), (15, 1.0), (20, 1.5), (25, 2.0), (30, 3.5), (40, 4.5);
+
+
+		--- 1-9. Таблица со списком возможных ошибок
+		create table data_errors
+		(
+			id integer,
+			description text
+		);
+
+		create sequence data_errors_id_seq;
+		alter table data_errors alter column id set default nextval('data_errors_id_seq');
+		alter sequence data_errors_id_seq owned by data_errors.id;
+
+		comment on table data_errors is 'Таблица со списком возможных ошибок';
+		comment on column data_errors.id is 'Уникальный номер ошибки';
+		comment on column data_errors.description is 'Текст ошибки';
+
+		-- Заполняем данные
+		insert into data_errors(description) values
+		('Данные выходят за пределы допустимых диапазонов'),
+		('Данные в некоторых ячейках отсутствуют'),
+		('Присутствуют лишние данные');
 	end;
 
 
@@ -244,6 +262,7 @@ begin
 		alter table batches add primary key (id);
 		alter table parameters_measurements add primary key (id);
 		alter table temperature_calc_1 add primary key (id);
+		alter table data_errors add primary key (id);
 		
 		alter table employees add foreign key (military_rank_id) references military_ranks (id);
 		alter table parameter_types add foreign key (parameter_value_id) references parameter_values (id);
@@ -266,7 +285,6 @@ begin
 			alter column parameter_value_id set not null;
 		alter table batches
 			alter column employee_id set not null;
-			--alter column ddhhm set not null;
 		alter table parameters_measurements
 			alter column batch_id set not null,
 			alter column parameter_type_id set not null,
@@ -274,5 +292,7 @@ begin
 		alter table temperature_calc_1
 			alter column temperature set not null,
 			alter column correction set not null;
+		alter table data_errors
+			alter column description set not null;
 	end;
 end $$;

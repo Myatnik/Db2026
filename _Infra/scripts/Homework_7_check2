@@ -1,0 +1,30 @@
+-- Проверка работоспособности
+do $test$
+	declare 
+		meas_values parameter_types_t;
+		answer_func text array;
+
+	begin
+		drop table if exists test cascade;
+		create table if not exists test (
+			id int,
+			measurement_type_id int,
+			altitude int,
+			temperature int,
+			pressure int,
+			wind_direction int,
+			wind_speed int,
+			bullet_drift_length int,
+			answer text array);
+			
+		-- Работоспособность функции
+		meas_values := row(1, 60, 23, 757, 12, 3, 0)::parameter_types_t;
+		answer_func := calculate_extra_data(meas_values);
+		insert into test values
+			(1, meas_values.measurement_type_id, meas_values.altitude,
+			meas_values.temperature, meas_values.pressure, meas_values.wind_direction,
+			meas_values.wind_speed, meas_values.bullet_drift_length, answer_func);
+	end;
+$test$;
+
+select * from test;
