@@ -1,12 +1,14 @@
 -- Вспомогательные структуры для рассчёта
+do $do$
+begin
 --удаляем создаваемое
-drop table if exists WR_LMC_table1 cascade; --wind rifle
-drop table if exists WR_table2 cascade;
-drop table if exists LMC_table2 cascade; --landing meteorological complex
+drop table if exists measurement_types_both_mean_values cascade; --первая таблица у обоих аппаратов одинаковая
+drop table if exists wind_rifle_mean_values cascade; --wind rifle
+drop table if exists land_meteo_comples_mean_values cascade; --landing meteorological complex
 
 
 --ВР таблица 1
-create table if not exists WR_LMC_table1(
+create table if not exists measurement_types_both_mean_values(
 	height_200 float,
 	height_400 float,
 	height_800 float,
@@ -17,18 +19,18 @@ create table if not exists WR_LMC_table1(
 	height_3000 float,
 	height_4000 float);
 
-comment on table WR_LMC_table1 is 'Таблица со средними отклонениями температуры воздуха Y в пределах стандартных высот бюллетеня в зависимости от отклонения приземной виртуальной температуры';
-comment on column WR_LMC_table1.height_200 is 'Отклонения на высоте 200';
-comment on column WR_LMC_table1.height_400 is 'Отклонения на высоте 400';
-comment on column WR_LMC_table1.height_800 is 'Отклонения на высоте 800';
-comment on column WR_LMC_table1.height_1200 is 'Отклонения на высоте 1200';
-comment on column WR_LMC_table1.height_1600 is 'Отклонения на высоте 1600';
-comment on column WR_LMC_table1.height_2000 is 'Отклонения на высоте 2000';
-comment on column WR_LMC_table1.height_2400 is 'Отклонения на высоте 2400';
-comment on column WR_LMC_table1.height_3000 is 'Отклонения на высоте 3000';
-comment on column WR_LMC_table1.height_4000 is 'Отклонения на высоте 4000';
+comment on table measurement_types_both_mean_values is 'Таблица со средними отклонениями температуры воздуха Y в пределах стандартных высот бюллетеня в зависимости от отклонения приземной виртуальной температуры';
+comment on column measurement_types_both_mean_values.height_200 is 'Отклонения на высоте 200';
+comment on column measurement_types_both_mean_values.height_400 is 'Отклонения на высоте 400';
+comment on column measurement_types_both_mean_values.height_800 is 'Отклонения на высоте 800';
+comment on column measurement_types_both_mean_values.height_1200 is 'Отклонения на высоте 1200';
+comment on column measurement_types_both_mean_values.height_1600 is 'Отклонения на высоте 1600';
+comment on column measurement_types_both_mean_values.height_2000 is 'Отклонения на высоте 2000';
+comment on column measurement_types_both_mean_values.height_2400 is 'Отклонения на высоте 2400';
+comment on column measurement_types_both_mean_values.height_3000 is 'Отклонения на высоте 3000';
+comment on column measurement_types_both_mean_values.height_4000 is 'Отклонения на высоте 4000';
 
-insert into WR_LMC_table1 values
+insert into measurement_types_both_mean_values values
 	( -1/1,   -1/1,   -1/1,   -1/1,   -1/1,   -1/1,   -1/1,   -1/1,   -1/1 ), --отклонение приземной виртуальной температуры 1
 	( -2/2,   -2/2,   -2/2,   -2/2,   -2/2,   -2/2,   -2/2,   -2/2,   -2/2 ), --отклонение 2
 	( -3/3,   -3/3,   -3/3,   -3/3,   -3/3,   -3/3,   -2/3,   -2/3,   -2/3 ), --отклонение 3
@@ -46,7 +48,7 @@ insert into WR_LMC_table1 values
 	
 
 --ВР таблица 2
-create table if not exists WR_table2(
+create table if not exists wind_rifle_mean_values(
 	height_200 int,
 	height_400 int,
 	height_800 int,
@@ -57,18 +59,18 @@ create table if not exists WR_table2(
 	height_3000 int,
 	height_4000 int);
 
-comment on table WR_table2 is 'Таблица со скоростями среднего ветра в зависимости от дальности сноса ветровых пуль';
-comment on column WR_table2.height_200 is 'Скорость на высоте 200';
-comment on column WR_table2.height_400 is 'Скорость на высоте 400';
-comment on column WR_table2.height_800 is 'Скорость на высоте 800';
-comment on column WR_table2.height_1200 is 'Скорость на высоте 1200';
-comment on column WR_table2.height_1600 is 'Скорость на высоте 1600';
-comment on column WR_table2.height_2000 is 'Скорость на высоте 2000';
-comment on column WR_table2.height_2400 is 'Скорость на высоте 2400';
-comment on column WR_table2.height_3000 is 'Скорость на высоте 3000';
-comment on column WR_table2.height_4000 is 'Скорость на высоте 4000';
+comment on table wind_rifle_mean_values is 'Таблица со скоростями среднего ветра в зависимости от дальности сноса ветровых пуль';
+comment on column wind_rifle_mean_values.height_200 is 'Скорость на высоте 200';
+comment on column wind_rifle_mean_values.height_400 is 'Скорость на высоте 400';
+comment on column wind_rifle_mean_values.height_800 is 'Скорость на высоте 800';
+comment on column wind_rifle_mean_values.height_1200 is 'Скорость на высоте 1200';
+comment on column wind_rifle_mean_values.height_1600 is 'Скорость на высоте 1600';
+comment on column wind_rifle_mean_values.height_2000 is 'Скорость на высоте 2000';
+comment on column wind_rifle_mean_values.height_2400 is 'Скорость на высоте 2400';
+comment on column wind_rifle_mean_values.height_3000 is 'Скорость на высоте 3000';
+comment on column wind_rifle_mean_values.height_4000 is 'Скорость на высоте 4000';
 
-insert into WR_table2 values
+insert into wind_rifle_mean_values values
 	(3,  4,  4,  4,  4,  4,  4,  5,  5 ), --дальность сноса ветровых пуль 40
 	(4,  5,  5,  5,  6,  6,  6,  6,  6 ), --дальность 50
 	(5,  6,  6,  7,  7,  7,  8,  8,  8 ), --дальность 60
@@ -85,7 +87,7 @@ insert into WR_table2 values
 	
 
 --ДМК таблица 2
-create table if not exists LMC_table2(
+create table if not exists land_meteo_comples_mean_values(
 	height_200 int,
 	height_400 int,
 	height_800 int,
@@ -96,18 +98,18 @@ create table if not exists LMC_table2(
 	height_3000 int,
 	height_4000 int);
 
-comment on table LMC_table2 is 'Таблица со скоростями среднего ветра в зависимости от скорости приземного ветра';
-comment on column LMC_table2.height_200 is 'Скорость на высоте 200';
-comment on column LMC_table2.height_400 is 'Скорость на высоте 400';
-comment on column LMC_table2.height_800 is 'Скорость на высоте 800';
-comment on column LMC_table2.height_1200 is 'Скорость на высоте 1200';
-comment on column LMC_table2.height_1600 is 'Скорость на высоте 1600';
-comment on column LMC_table2.height_2000 is 'Скорость на высоте 2000';
-comment on column LMC_table2.height_2400 is 'Скорость на высоте 2400';
-comment on column LMC_table2.height_3000 is 'Скорость на высоте 3000';
-comment on column LMC_table2.height_4000 is 'Скорость на высоте 4000';
+comment on table land_meteo_comples_mean_values is 'Таблица со скоростями среднего ветра в зависимости от скорости приземного ветра';
+comment on column land_meteo_comples_mean_values.height_200 is 'Скорость на высоте 200';
+comment on column land_meteo_comples_mean_values.height_400 is 'Скорость на высоте 400';
+comment on column land_meteo_comples_mean_values.height_800 is 'Скорость на высоте 800';
+comment on column land_meteo_comples_mean_values.height_1200 is 'Скорость на высоте 1200';
+comment on column land_meteo_comples_mean_values.height_1600 is 'Скорость на высоте 1600';
+comment on column land_meteo_comples_mean_values.height_2000 is 'Скорость на высоте 2000';
+comment on column land_meteo_comples_mean_values.height_2400 is 'Скорость на высоте 2400';
+comment on column land_meteo_comples_mean_values.height_3000 is 'Скорость на высоте 3000';
+comment on column land_meteo_comples_mean_values.height_4000 is 'Скорость на высоте 4000';
 
-insert into LMC_table2 values
+insert into land_meteo_comples_mean_values values
 	(4,  5,  5,  5,  6,  6,  6,  6,  6 ), --скорость приземного ветра 3
 	(6,  7,  8,  8,  8,  9,  9,  9,  10), --скорость 4
 	(8,  10, 10, 11, 11, 11, 12, 12, 12), --скорость 5
@@ -121,3 +123,5 @@ insert into LMC_table2 values
 	(20, 23, 25, 26, 27, 28, 29, 30, 32), --скорость 13
 	(21, 25, 27, 28, 29, 30, 32, 32, 34), --скорость 14
 	(22, 27, 28, 30, 32, 32, 34, 36, 36); --скорость 15
+end;
+$do$;
