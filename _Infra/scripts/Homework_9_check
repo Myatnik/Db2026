@@ -1,0 +1,36 @@
+-- Проверка функции
+do $test$
+	declare
+	    p_height int;
+	    one_value int;
+	    other_value int;
+	    measurement_type int;
+		result int array;
+	begin
+		drop table if exists test cascade;
+	    create temp table if not exists test (
+			measurement_type int,
+	        p_height int,
+	        one_value int,
+	        other_value int,
+			result int array);
+	
+	    p_height := 200;
+	    one_value := 6;
+	    other_value := 4;
+	    measurement_type := 1;
+		result := calculate_stuff(200, 6, 4, 1);
+	    insert into test values (measurement_type, p_height, one_value, other_value, result);
+
+		p_height := 1200;
+	    one_value := 21;
+	    other_value := 70;
+	    measurement_type := 2;
+		result := calculate_stuff(1200, 21, 70, 2);
+	    insert into test values (measurement_type, p_height, one_value, other_value, result);
+	
+
+	end;
+$test$;
+
+select * from test;
