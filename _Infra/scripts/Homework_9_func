@@ -1,0 +1,103 @@
+-- Функция рассчёта штук
+do $do$
+begin
+	-- Удаление создаваемого
+	drop function if exists calculate_stuff (int, int, int, int) cascade;
+
+	-- Функция
+	create or replace function calculate_stuff (p_height int, one_value int, other_value int, measurement_type int)
+	returns int array
+	language plpgsql
+	as $func$
+		declare
+		answer int array;
+		ones int;
+		tens int;
+		Y1 int;
+		Y2 int;
+		begin
+			-- Сперва Y2, так как Y1 может поменять высоту
+			if measurement_type = 1 then --дмк
+				if other_value < 3 then
+					Y2 := 0;
+				else
+					select c.row_values[array_position(hh.header_values, other_value)]
+			        	into Y2
+			            from calc_correction c
+			            join calc_correction_heights ch on ch.id = c.height_id
+			            join calc_correction_types   t  on t.id  = c.type_id
+			            join calc_correction_headers hh on hh.id = t.header_values
+			            where ch.height = p_height and c.type_id = 4;
+				end if;
+			elsif measurement_type = 2 then --вр
+				if other_value < 40 then
+					Y2 := 0;
+				else
+					select c.row_values[array_position(hh.header_values, other_value)]
+              			into Y2
+              			from calc_correction c
+              			join calc_correction_heights ch on ch.id = c.height_id
+             			join calc_correction_types   t  on t.id  = c.type_id
+          			    join calc_correction_headers hh on hh.id = t.header_values
+           				where ch.height = p_height and c.type_id = 3;
+				end if;
+			end if;
+			
+			-- Теперь Y1
+			-- Подготовка значений
+			if one_value > 0 then
+				p_height := 200;
+			end if;
+			ones := one_value % 10;
+			tens := (one_value / 10) * 10;
+			if one_value > 0 then
+				if ones <> 0 then
+            		select c.row_values[array_position(hh.header_values, ones)]
+              			into Y1
+              			from calc_correction c
+              			join calc_correction_heights ch on ch.id = c.height_id
+              			join calc_correction_types   t  on t.id  = c.type_id
+              			join calc_correction_headers hh on hh.id = t.header_values
+             			where ch.height = p_height and c.type_id = 1;
+        		end if;
+        		if tens <> 0 then
+            		Y1 := coalesce(Y1, 0) + (
+                	select c.row_values[array_position(hh.header_values, tens)]
+                  		from calc_correction c
+                  		join calc_correction_heights ch on ch.id = c.height_id
+                  		join calc_correction_types   t  on t.id  = c.type_id
+                  		join calc_correction_headers hh on hh.id = t.header_values
+                 		where ch.height = p_height and c.type_id = 1);
+        		end if;
+
+    		elsif one_value < 0 then
+        		if ones <> 0 then
+            		select c.row_values[array_position(hh.header_values, ones)]
+              		into Y1
+              		from calc_correction c
+              		join calc_correction_heights ch on ch.id = c.height_id
+              		join calc_correction_types   t  on t.id  = c.type_id
+              		join calc_correction_headers hh on hh.id = t.header_values
+             		where ch.height = p_height and c.type_id = 2;
+        		end if;
+	        	if tens <> 0 then
+            		Y1 := coalesce(Y1, 0) + (
+                	select c.row_values[array_position(hh.header_values, tens)]
+                  	from calc_correction c
+                  	join calc_correction_heights ch on ch.id = c.height_id
+                  	join calc_correction_types   t  on t.id  = c.type_id
+                  	join calc_correction_headers hh on hh.id = t.header_values
+                 	where ch.height = p_height and c.type_id = 2);
+        		end if;
+			end if;
+			
+			answer = array_append(answer, Y1);
+			answer = array_append(answer, Y2);
+			return answer;
+		end;
+	$func$;
+	comment on function calculate_stuff (int, int, int, int) is 'Возвращает значения из вспомогательных таблиц';
+	
+	
+end;
+$do$;
