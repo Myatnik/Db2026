@@ -3,3 +3,4 @@ _Infra/pgdata/
 _Infra/.env
 _Infra/backup/
 _infra/mssql-data/
+_Infra/postgres-data/
