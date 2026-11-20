@@ -30,7 +30,7 @@ select top 1
     so.BludoID,
     pr.description as ProductID,
     so.ClientID,
-    so.ContractID,
+    so.Price,
     st.description as StorageID,
     so.RangeID
 from
